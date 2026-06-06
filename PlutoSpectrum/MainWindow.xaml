@@ -1,0 +1,456 @@
+<Window x:Class="PlutoSpectrum.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+        xmlns:local="clr-namespace:PlutoSpectrum"
+        mc:Ignorable="d"
+        Title="PlutoSpectrum — Pluto+ Spectrum Analyzer (70 MHz – 7 GHz)"
+        Height="780" Width="1280"
+        MinHeight="600" MinWidth="900"
+        Background="#1E1E2E"
+        Closed="Window_Closed">
+
+    <Window.Resources>
+        <Style x:Key="DarkLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="GroupLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#89B4FA"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45475A"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="StartButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
+            <Setter Property="Background" Value="#1E6340"/>
+            <Setter Property="BorderBrush" Value="#A6E3A1"/>
+            <Setter Property="Foreground" Value="#A6E3A1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2A7A52"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DarkTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ReadOnlyBox" TargetType="TextBox" BasedOn="{StaticResource DarkTextBox}">
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Foreground" Value="#A6E3A1"/>
+            <Setter Property="Background" Value="#181825"/>
+        </Style>
+        <Style x:Key="DarkCombo" TargetType="ComboBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#313244"/>
+                        <Setter Property="Foreground" Value="#CDD6F4"/>
+                        <Setter Property="Padding" Value="6,3"/>
+                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                        <Setter Property="FontSize" Value="11"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#45475A"/>
+                                <Setter Property="Foreground" Value="#CDD6F4"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#89B4FA"/>
+                                <Setter Property="Foreground" Value="#1E1E2E"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="3"/>
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              Margin="8,3,28,3"
+                                              VerticalAlignment="Center"/>
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Visibility="Hidden" IsReadOnly="True"
+                                     Margin="8,3,28,3"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     Background="Transparent"
+                                     BorderThickness="0"/>
+                            <ToggleButton x:Name="ToggleButton"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                                      RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Cursor="Hand">
+                                <Path x:Name="Arrow"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,8,0"
+                                      Fill="#89B4FA"
+                                      Data="M0,0 L4,4 L8,0 Z"/>
+                            </ToggleButton>
+                            <Popup x:Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid x:Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="#313244"
+                                            BorderBrush="#45475A"
+                                            BorderThickness="1"
+                                            CornerRadius="0,0,3,3"/>
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True"
+                                                    KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Separator" TargetType="Border">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Background" Value="#45475A"/>
+            <Setter Property="Margin" Value="8,2,8,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="4"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="4"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Frequency controls -->
+        <Border Grid.Row="0" Background="#181825" Padding="10,5,10,4"
+                BorderBrush="#313244" BorderThickness="0,0,0,1">
+            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                <!-- Connection -->
+                <TextBlock Text="IP" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtPlutoIp" Text="192.168.2.1" Width="100" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,6,0"/>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Frequency Inputs -->
+                <TextBlock Text="CENTER" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtCenterFreq" Text="433.0" Width="75" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         ToolTip="Center frequency in MHz (70 – 7000)"/>
+                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+
+                <TextBlock Text="START" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtStartFreq" Text="70.0" Width="72" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         ToolTip="Sweep start frequency in MHz"/>
+                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+
+                <TextBlock Text="STOP" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtStopFreq" Text="7000.0" Width="72" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         ToolTip="Sweep stop frequency in MHz"/>
+                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- SPAN -->
+                <TextBlock Text="SPAN" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbSpan" Width="100" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          SelectionChanged="CmbSpan_SelectionChanged"
+                          ToolTip="Displayed frequency span (sets sample rate)">
+                    <ComboBoxItem Content="200 kHz"   Tag="200000"/>
+                    <ComboBoxItem Content="500 kHz"   Tag="500000"/>
+                    <ComboBoxItem Content="1 MHz"     Tag="1000000"/>
+                    <ComboBoxItem Content="2 MHz"     Tag="2000000"/>
+                    <ComboBoxItem Content="5 MHz"     Tag="5000000" IsSelected="True"/>
+                    <ComboBoxItem Content="10 MHz"    Tag="10000000"/>
+                    <ComboBoxItem Content="20 MHz"    Tag="20000000"/>
+                    <ComboBoxItem Content="Full"      Tag="0"/>
+                </ComboBox>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Mode -->
+                <TextBlock Text="MODE" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbMode" Width="95" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          SelectionChanged="CmbMode_SelectionChanged">
+                    <ComboBoxItem Content="Live"       Tag="live"      IsSelected="True"/>
+                    <ComboBoxItem Content="Span Sweep" Tag="sweep"/>
+                    <ComboBoxItem Content="Full Sweep" Tag="fullsweep"/>
+                </ComboBox>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Start/Stop + Apply -->
+                <Button x:Name="BtnStartStop" Content="▶  START" Width="85" Height="26"
+                        Style="{StaticResource StartButton}" Margin="0,0,6,0"
+                        Click="BtnStartStop_Click"/>
+                <Button x:Name="BtnApplyFreq" Content="Apply" Width="56" Height="26"
+                        Style="{StaticResource DarkButton}"
+                        Click="BtnApplyFreq_Click"
+                        ToolTip="Apply center freq / start-stop in live/sweep mode without restarting"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- Row 1: Signal / DSP controls -->
+        <Border Grid.Row="1" Background="#11111F" Padding="10,4,10,4"
+                BorderBrush="#313244" BorderThickness="0,0,0,1">
+            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                <!-- RBW -->
+                <TextBlock Text="RBW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRbw" Width="100" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          SelectionChanged="CmbRbw_SelectionChanged"
+                          ToolTip="Resolution Bandwidth — determines FFT size automatically">
+                    <ComboBoxItem Content="1 kHz"   Tag="1000"/>
+                    <ComboBoxItem Content="3 kHz"   Tag="3000"/>
+                    <ComboBoxItem Content="10 kHz"  Tag="10000"/>
+                    <ComboBoxItem Content="30 kHz"  Tag="30000"/>
+                    <ComboBoxItem Content="100 kHz" Tag="100000"/>
+                    <ComboBoxItem Content="300 kHz" Tag="300000" IsSelected="True"/>
+                    <ComboBoxItem Content="1 MHz"   Tag="1000000"/>
+                    <ComboBoxItem Content="Auto"    Tag="0"/>
+                </ComboBox>
+
+                <!-- VBW -->
+                <TextBlock Text="VBW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbVbw" Width="100" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          SelectionChanged="CmbVbw_SelectionChanged"
+                          ToolTip="Video Bandwidth — post-detection averaging filter">
+                    <ComboBoxItem Content="1 kHz"   Tag="1000"/>
+                    <ComboBoxItem Content="3 kHz"   Tag="3000"/>
+                    <ComboBoxItem Content="10 kHz"  Tag="10000"/>
+                    <ComboBoxItem Content="30 kHz"  Tag="30000"/>
+                    <ComboBoxItem Content="100 kHz" Tag="100000" IsSelected="True"/>
+                    <ComboBoxItem Content="300 kHz" Tag="300000"/>
+                    <ComboBoxItem Content="1 MHz"   Tag="1000000"/>
+                    <ComboBoxItem Content="3 MHz"   Tag="3000000"/>
+                </ComboBox>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- RF BW -->
+                <TextBlock Text="RF BW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRfBw" Width="90" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          ToolTip="Analog front-end filter bandwidth">
+                    <ComboBoxItem Content="200 kHz" Tag="200000"/>
+                    <ComboBoxItem Content="1 MHz"   Tag="1000000"/>
+                    <ComboBoxItem Content="2 MHz"   Tag="2000000"/>
+                    <ComboBoxItem Content="5 MHz"   Tag="5000000" IsSelected="True"/>
+                    <ComboBoxItem Content="10 MHz"  Tag="10000000"/>
+                    <ComboBoxItem Content="20 MHz"  Tag="20000000"/>
+                </ComboBox>
+
+                <!-- Sample Rate (kept for manual override) -->
+                <TextBlock Text="Fs" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbSampleRate" Width="90" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          SelectionChanged="CmbSampleRate_SelectionChanged"
+                          ToolTip="ADC sample rate (overrides Span when set manually)">
+                    <ComboBoxItem Content="1 MSPS"  Tag="1000000"/>
+                    <ComboBoxItem Content="2 MSPS"  Tag="2000000"/>
+                    <ComboBoxItem Content="5 MSPS"  Tag="5000000" IsSelected="True"/>
+                    <ComboBoxItem Content="10 MSPS" Tag="10000000"/>
+                    <ComboBoxItem Content="20 MSPS" Tag="20000000"/>
+                </ComboBox>
+
+                <!-- FFT Size (manual) -->
+                <TextBlock Text="FFT" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbFftSize" Width="75" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
+                          ToolTip="FFT size (auto-set by RBW; override here)">
+                    <ComboBoxItem Content="1024"  Tag="1024"/>
+                    <ComboBoxItem Content="2048"  Tag="2048"/>
+                    <ComboBoxItem Content="4096"  Tag="4096" IsSelected="True"/>
+                    <ComboBoxItem Content="8192"  Tag="8192"/>
+                    <ComboBoxItem Content="16384" Tag="16384"/>
+                    <ComboBoxItem Content="32768" Tag="32768"/>
+                </ComboBox>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Gain -->
+                <TextBlock Text="GAIN" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <Slider x:Name="SldGain" Minimum="0" Maximum="73" Value="40" Width="100"
+                        VerticalAlignment="Center" Margin="0,0,4,0"
+                        ValueChanged="SldGain_ValueChanged"
+                        Foreground="#89B4FA"/>
+                <TextBlock x:Name="TxtGainVal" Text="40" Style="{StaticResource DarkLabel}"
+                           Width="24" Margin="0,0,10,0"/>
+                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,12,0"/>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- RX Antenna -->
+                <TextBlock Text="ANT" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRxAntenna" Width="85" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0">
+                    <ComboBoxItem Content="Antenna 1" Tag="A_BALANCED" IsSelected="True"/>
+                    <ComboBoxItem Content="Antenna 2" Tag="B_BALANCED"/>
+                </ComboBox>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Derived readouts (read-only) -->
+                <TextBlock Text="RBW:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
+                <TextBox x:Name="TxtRbwActual" Width="70" Height="22"
+                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,8,0"/>
+                <TextBlock Text="VBW:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
+                <TextBox x:Name="TxtVbwActual" Width="70" Height="22"
+                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,8,0"/>
+                <TextBlock Text="Span:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
+                <TextBox x:Name="TxtSpanActual" Width="70" Height="22"
+                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,12,0"/>
+
+                <Border Style="{StaticResource Separator}"/>
+
+                <!-- Ref Level -->
+                <TextBlock Text="REF LVL" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtRefLevel" Text="0" Width="44" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         ToolTip="Reference level (top of Y axis) in dBFS or dBm"
+                         LostFocus="TxtRefLevel_LostFocus"
+                         KeyDown="TxtRefLevel_KeyDown"/>
+                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,10,0"/>
+
+                <!-- dB/div -->
+                <TextBlock Text="dB/div" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbDbDiv" Width="70" Height="24"
+                          Style="{StaticResource DarkCombo}" Margin="0,0,10,0"
+                          SelectionChanged="CmbDbDiv_SelectionChanged"
+                          ToolTip="Vertical scale — dB per division (10 divs shown)">
+                    <ComboBoxItem Content="1 dB"   Tag="10"/>
+                    <ComboBoxItem Content="2 dB"   Tag="20"/>
+                    <ComboBoxItem Content="5 dB"   Tag="50"/>
+                    <ComboBoxItem Content="10 dB"  Tag="100" IsSelected="True"/>
+                    <ComboBoxItem Content="20 dB"  Tag="200"/>
+                </ComboBox>
+
+                <!-- Cal Offset -->
+                <TextBlock Text="CAL" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"
+                           ToolTip="Calibration offset added to all power readings. Use to align dBFS to dBm (= −gainDb − NF_est + hardware_correction)"/>
+                <TextBox x:Name="TxtCalOffset" Text="0" Width="44" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         ToolTip="Add this dB offset to convert dBFS → dBm (tip: ≈ −gainDiff at 2.4 GHz)"
+                         LostFocus="TxtCalOffset_LostFocus"
+                         KeyDown="TxtCalOffset_KeyDown"/>
+                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,0,0"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- Spectrum plot (FFT magnitude) -->
+        <sp:WpfPlot x:Name="SpectrumPlot" Grid.Row="2"
+                    Margin="4,4,4,0"
+                    Background="#1E1E2E"/>
+
+        <!-- Splitter -->
+        <GridSplitter Grid.Row="3" Height="4"
+                      HorizontalAlignment="Stretch"
+                      Background="#313244"
+                      ResizeDirection="Rows"
+                      ResizeBehavior="PreviousAndNext"/>
+
+        <!-- PSD plot -->
+        <sp:WpfPlot x:Name="PsdPlot" Grid.Row="4"
+                    Margin="4,0,4,0"
+                    Background="#1E1E2E"/>
+
+        <!-- Splitter -->
+        <GridSplitter Grid.Row="5" Height="4"
+                      HorizontalAlignment="Stretch"
+                      Background="#313244"
+                      ResizeDirection="Rows"
+                      ResizeBehavior="PreviousAndNext"/>
+
+        <!-- Waterfall plot -->
+        <sp:WpfPlot x:Name="WaterfallPlot" Grid.Row="6"
+                    Margin="4,0,4,4"
+                    Background="#1E1E2E"/>
+
+        <!-- Status bar -->
+        <Border Grid.Row="7" Background="#181825" Padding="10,3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtStatus" Grid.Column="0"
+                           Text="Ready — connect Pluto+ and press START"
+                           Style="{StaticResource DarkLabel}"/>
+                <TextBlock x:Name="TxtSaInfo" Grid.Column="1"
+                           Text="" Style="{StaticResource DarkLabel}"
+                           Foreground="#A6E3A1"
+                           Margin="0,0,20,0"/>
+                <TextBlock x:Name="TxtMouseFreq" Grid.Column="2"
+                           Text="" Style="{StaticResource DarkLabel}"
+                           Foreground="#89B4FA"
+                           Margin="0,0,8,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

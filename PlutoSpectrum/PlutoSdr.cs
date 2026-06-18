@@ -7,11 +7,18 @@ namespace PlutoSpectrum
     {
         public const string DefaultIp = "192.168.2.1";
 
-        // AD9364 (Pluto+) hardware LO limits
-        // Extended Pluto+ firmware supports up to 7 GHz via register hacking; standard is ~6 GHz.
-        // We allow up to 7 GHz and clamp at 6 999 999 999 so the firmware never sees exactly 7 GHz.
-        public const long LoMinHz = 70_000_000L;      // 70 MHz
-        public const long LoMaxHz = 6_999_999_999L;   // just under 7 GHz
+        // AD9364 (Pluto+) hardware LO limits.
+        // Standard AD9364 firmware accepts 70 MHz – 6 GHz.
+        // Extended Pluto+ firmware can go to ~6.999 GHz but EINVAL is returned if the firmware
+        // was not patched. Use the 6 GHz safe default; pass a custom loMaxHz to Open() for
+        // extended firmware builds.
+        public const long LoMinHz        = 70_000_000L;       // 70 MHz — hardware minimum
+        public const long LoMaxHz        = 6_000_000_000L;    // 6 GHz  — safe default (standard firmware)
+        public const long LoMaxHzExtended = 6_999_999_000L;   // ~7 GHz — extended firmware only
+
+        // Actual limits in use for this session (set by Open, readable by UI).
+        public long ActualLoMinHz { get; private set; } = LoMinHz;
+        public long ActualLoMaxHz { get; private set; } = LoMaxHz;
 
         // ── libiio P/Invoke ──────────────────────────────────────────────────
         private const string Lib = "libiio";
@@ -23,7 +30,9 @@ namespace PlutoSpectrum
         [DllImport(Lib)] static extern int    iio_channel_attr_write_longlong(IntPtr ch, string attr, long val);
         [DllImport(Lib)] static extern int    iio_channel_attr_write_double(IntPtr ch, string attr, double val);
         [DllImport(Lib)] static extern int    iio_channel_attr_write(IntPtr ch, string attr, string val);
-        [DllImport(Lib)] static extern int    iio_channel_attr_read(IntPtr ch, string attr, System.Text.StringBuilder dst, nuint len);
+        // M5 fix: use byte[] (not StringBuilder) so the marshaller passes a plain char* buffer
+        // that libiio writes UTF-8 bytes into, rather than LPWSTR (UTF-16) which misinterprets them.
+        [DllImport(Lib)] static extern int    iio_channel_attr_read(IntPtr ch, string attr, byte[] dst, nuint len);
         [DllImport(Lib)] static extern uint   iio_channel_get_attrs_count(IntPtr ch);
         [DllImport(Lib)] static extern IntPtr iio_channel_get_attr(IntPtr ch, uint index);
 
@@ -41,7 +50,8 @@ namespace PlutoSpectrum
         [DllImport(Lib)] static extern int    iio_buffer_refill(IntPtr buf);
         [DllImport(Lib)] static extern IntPtr iio_buffer_first(IntPtr buf, IntPtr ch);
         [DllImport(Lib)] static extern IntPtr iio_buffer_end(IntPtr buf);
-        [DllImport(Lib)] static extern long   iio_buffer_step(IntPtr buf);
+        // M4 fix: iio_buffer_step returns ptrdiff_t/ssize_t — use nint, not long.
+        [DllImport(Lib)] static extern nint   iio_buffer_step(IntPtr buf);
         // ────────────────────────────────────────────────────────────────────
 
         private IntPtr _ctx;
@@ -63,9 +73,12 @@ namespace PlutoSpectrum
         public string[] RxPortsAvailable { get; private set; } = [];
 
         public void Open(long centerFreqHz, long sampleRateHz, long rfBwHz, double gainDb,
-                         int fftSize, string host = DefaultIp, string rxAntenna = "A_BALANCED")
+                         int fftSize, string host = DefaultIp, string rxAntenna = "A_BALANCED",
+                         long loMaxHz = LoMaxHz)
         {
             _fftSize = fftSize;
+            ActualLoMinHz = LoMinHz;
+            ActualLoMaxHz = Math.Clamp(loMaxHz, LoMinHz, LoMaxHzExtended);
 
             _ctx = iio_create_network_context(host);
             if (_ctx == IntPtr.Zero)
@@ -88,6 +101,9 @@ namespace PlutoSpectrum
                 throw new InvalidOperationException("PHY RX channel 'voltage0' (input) not found.");
 
             Check(WriteInt   (_phyRx, "sampling_frequency", sampleRateHz), "sampling_frequency", sampleRateHz);
+            // W7 note: small settle between sampling_frequency and rf_bandwidth to avoid EINVAL
+            // on some firmware revisions where the ADC PLL recalibration races the next write.
+            System.Threading.Thread.Sleep(5);
             Check(WriteInt   (_phyRx, "rf_bandwidth",       rfBwHz),       "rf_bandwidth",       rfBwHz);
             Check(iio_channel_attr_write(_phyRx, "gain_control_mode", "manual"),              "gain_control_mode");
             Check(WriteDouble(_phyRx, "hardwaregain",        gainDb),       "hardwaregain",       (long)gainDb);
@@ -119,7 +135,7 @@ namespace PlutoSpectrum
             // Wait for PHY to settle after sample rate change before touching the LO PLL
             System.Threading.Thread.Sleep(50);
 
-            long clampedFreq = Math.Clamp(centerFreqHz, LoMinHz, LoMaxHz);
+            long clampedFreq = Math.Clamp(centerFreqHz, ActualLoMinHz, ActualLoMaxHz);
             Check(WriteInt(_phyLo, _loFreqAttr, clampedFreq), "LO frequency", clampedFreq);
 
             // Enable I/Q streaming channels
@@ -147,15 +163,22 @@ namespace PlutoSpectrum
 
             IntPtr start = iio_buffer_first(_buf, _rxI);
             IntPtr end   = iio_buffer_end(_buf);
-            long   step  = iio_buffer_step(_buf);
+            nint   step  = iio_buffer_step(_buf);   // M4 fix: nint matches ptrdiff_t
 
-            int count   = (int)((end.ToInt64() - start.ToInt64()) / step);
-            var samples = new short[count * 2];
+            int count = (int)((end.ToInt64() - start.ToInt64()) / step);
+
+            // H3 fix: guard against IIO delivering a different count than _fftSize
+            if (count < _fftSize)
+                throw new InvalidOperationException(
+                    $"IIO buffer delivered {count} samples; expected {_fftSize}. " +
+                    "Buffer underrun or driver size mismatch.");
+
+            var samples = new short[_fftSize * 2];
 
             unsafe
             {
                 byte* ptr = (byte*)start.ToPointer();
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < _fftSize; i++)
                 {
                     samples[i * 2]     = *(short*)(ptr + i * step);
                     samples[i * 2 + 1] = *(short*)(ptr + i * step + 2);
@@ -169,17 +192,30 @@ namespace PlutoSpectrum
         public void SetCenterFreq(long freqHz)
         {
             if (!IsOpen || _phyLo == IntPtr.Zero) return;
-            long clamped = Math.Clamp(freqHz, LoMinHz, LoMaxHz);
-            int ret = WriteInt(_phyLo, _loFreqAttr, clamped);
-            if (ret < 0)
+            long clamped = Math.Clamp(freqHz, ActualLoMinHz, ActualLoMaxHz);
+            int result = WriteInt(_phyLo, _loFreqAttr, clamped);
+            if (result == -22 && clamped > LoMaxHz)
+            {
+                // Firmware rejected a frequency above 6 GHz — standard firmware only.
+                // Lower the session limit and retry within the safe range.
+                ActualLoMaxHz = LoMaxHz;
+                clamped = Math.Clamp(freqHz, ActualLoMinHz, ActualLoMaxHz);
+                result = WriteInt(_phyLo, _loFreqAttr, clamped);
+            }
+            if (result < 0)
                 throw new InvalidOperationException(
-                    $"LO set failed: attr='{_loFreqAttr}' requested={freqHz} clamped={clamped} errno={-ret} ({ErrnoName(-ret)})");
+                    $"LO set failed: attr='{_loFreqAttr}' requested={freqHz} clamped={clamped} errno={-result} ({ErrnoName(-result)})");
         }
 
         public void SetGain(double gainDb)
         {
             if (!IsOpen || _phyRx == IntPtr.Zero) return;
-            WriteDouble(_phyRx, "hardwaregain", gainDb);
+            // M2 fix: check return value — a failure here means the hardware gain did not change.
+            int result = WriteDouble(_phyRx, "hardwaregain", gainDb);
+            if (result < 0)
+                throw new InvalidOperationException(
+                    $"hardwaregain write failed (errno {-result}: {ErrnoName(-result)}). " +
+                    "Ensure gain_control_mode is set to 'manual'.");
         }
 
         public void Dispose()
@@ -195,7 +231,6 @@ namespace PlutoSpectrum
         {
             uint count = iio_channel_get_attrs_count(ch);
             var  found = new System.Collections.Generic.List<string>();
-            var  buf   = new System.Text.StringBuilder(64);
 
             for (uint i = 0; i < count; i++)
             {
@@ -217,13 +252,17 @@ namespace PlutoSpectrum
                 $"Available attrs: [{string.Join(", ", found)}]");
         }
 
-        // Read a space-separated "_available" attribute and return the individual tokens.
+        // M3+M5 fix: use byte[] so P/Invoke passes a plain char* (not wchar_t*).
+        // libiio writes ASCII/UTF-8; decode with Latin-1 to preserve byte values exactly.
+        // Buffer is 1024 bytes to safely hold extended rf_port_select_available strings.
         private static string[] ReadAvailable(IntPtr ch, string attr)
         {
-            var sb  = new System.Text.StringBuilder(256);
-            int ret = iio_channel_attr_read(ch, attr, sb, (nuint)sb.Capacity);
+            var buf = new byte[1024];
+            int ret = iio_channel_attr_read(ch, attr, buf, (nuint)buf.Length);
             if (ret < 0) return [];
-            return sb.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            // Decode as UTF-8; trim at null terminator if present.
+            string raw = System.Text.Encoding.UTF8.GetString(buf, 0, ret);
+            return raw.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static void Check(int result, string label, long value = long.MinValue)

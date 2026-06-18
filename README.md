@@ -14,12 +14,16 @@ A real-time spectrum analyzer for the **ADALM-Pluto / Pluto+** SDR, built with C
 - **Live mode** — continuous FFT at a fixed center frequency
 - **Span Sweep** — sweep a user-defined start/stop range
 - **Full Sweep** — automated sweep across the entire 70 MHz – 7 GHz band
-- **Three synchronized displays** — Spectrum, PSD, and Waterfall
-- **Spectrum-analyzer style controls**
+- **Spectrum plot** — always visible, main display
+- **Switchable secondary panel** — Waterfall, PSD, IQ Constellation, or hidden
+- **GPU-accelerated DSP** — ILGPU backend auto-selected at startup (CUDA → OpenCL → CPU fallback)
+
+### Controls
 
 | Control | Description |
 |---|---|
 | **Center / Start / Stop** | Frequency entry in MHz, 70 – 7000 |
+| **Max Freq** | Upper frequency limit in MHz — set to 6000 for standard firmware, up to ~6999 for extended Pluto+ firmware |
 | **Span** | 200 kHz → 20 MHz → Full — drives the ADC sample rate automatically |
 | **RBW** | Resolution Bandwidth (1 kHz – 1 MHz) — auto-computes FFT size |
 | **VBW** | Video Bandwidth — post-detection averaging depth (1 kHz – 3 MHz) |
@@ -29,6 +33,7 @@ A real-time spectrum analyzer for the **ADALM-Pluto / Pluto+** SDR, built with C
 | **Gain** | Hardware gain 0 – 73 dB (AD9364) |
 | **RF BW** | Analog front-end filter bandwidth |
 | **ANT** | Select RX antenna port (A_BALANCED / B_BALANCED) |
+| **Bottom view** | Switch secondary panel: Waterfall / PSD / IQ / None |
 
 ---
 
@@ -45,6 +50,8 @@ A real-time spectrum analyzer for the **ADALM-Pluto / Pluto+** SDR, built with C
 
 - [MathNet.Numerics](https://www.nuget.org/packages/MathNet.Numerics/) — FFT
 - [ScottPlot.WPF](https://www.nuget.org/packages/ScottPlot.WPF/) — interactive plots
+- [ILGPU](https://www.nuget.org/packages/ILGPU/) — GPU-accelerated windowing and magnitude/dB kernels
+- [ILGPU.Algorithms](https://www.nuget.org/packages/ILGPU.Algorithms/) — `XMath` functions used in GPU kernels
 
 ---
 
@@ -60,6 +67,32 @@ dotnet run --project PlutoSpectrum/PlutoSpectrum.csproj
 Or open `PlutoSpectrum.sln` in Visual Studio 2022 and press **F5**.
 
 Make sure `libiio.dll` is on your PATH or in the output folder (`bin\Debug\net9.0-windows\`).
+
+---
+
+## GPU acceleration
+
+At startup `FftProviderFactory.Create()` probes for a discrete GPU via ILGPU:
+
+1. **CUDA** accelerator (NVIDIA) — preferred if found
+2. **OpenCL** accelerator (AMD / Intel) — fallback if no CUDA
+3. **CPU (MathNet)** — used when no discrete GPU is detected or GPU init fails
+
+The selected backend is shown in the status bar on startup (e.g. `FFT: GPU (NVIDIA GeForce …) + CPU FFT`).
+
+The GPU handles the two O(N) passes — Hann windowing and magnitude/dB computation — while MathNet runs the O(N log N) FFT on the background thread. This pipeline overlaps windowing and FFT work in time.
+
+---
+
+## Extended frequency range (Pluto+ only)
+
+The standard AD9364 firmware accepts LO frequencies up to 6 GHz. Patched Pluto+ firmware can reach ~6.999 GHz. To unlock the extended range:
+
+1. Flash the extended Pluto+ firmware on your device
+2. In the **Max Freq** field enter a value up to `6999` (MHz) and press Enter
+3. PlutoSpectrum passes the higher limit to `PlutoSdr.Open()` and clamps all LO writes within `[70 MHz, max]`
+
+If your firmware is not patched, writing frequencies above 6 GHz returns `EINVAL (-22)` from libiio; PlutoSpectrum catches this and prints a warning rather than crashing.
 
 ---
 
@@ -84,8 +117,9 @@ PlutoSpectrum/
 ├── PlutoSpectrum.sln
 └── PlutoSpectrum/
     ├── PlutoSdr.cs          # libiio P/Invoke wrapper — hardware abstraction
-    ├── MainWindow.xaml      # WPF UI — all controls and plots
-    ├── MainWindow.xaml.cs   # Acquisition loop, DSP (FFT/windowing/averaging)
+    ├── FftProvider.cs       # IFftProvider interface + CPU and GPU backends + factory
+    ├── MainWindow.xaml      # WPF UI — Catppuccin Mocha theme, all controls and plots
+    ├── MainWindow.xaml.cs   # Acquisition loop, DSP pipeline, sweep engine, UI logic
     ├── App.xaml / App.xaml.cs
     └── PlutoSpectrum.csproj
 ```
@@ -95,15 +129,23 @@ PlutoSpectrum/
 ## Architecture
 
 ```
-UI (WPF / XAML)
+UI (WPF / XAML — Catppuccin Mocha theme)
     │  events / data-binding
     ▼
 MainWindow.xaml.cs
     │  async Task.Run
-    ├──▶ DSP pipeline: IQ samples → Hann window → FFT → dBFS → avg → cal offset
-    │         ├── Spectrum plot  (ScottPlot SignalXY)
-    │         ├── PSD plot       (ScottPlot SignalXY)
-    │         └── Waterfall      (ScottPlot Heatmap, scrolling 200-row matrix)
+    ├──▶ DSP pipeline
+    │         IQ samples
+    │           → IFftProvider.Compute()          ← GPU (ILGPU) or CPU (MathNet)
+    │               ├── Hann window               ← GPU kernel (O(N))
+    │               ├── FFT                       ← MathNet (O(N log N))
+    │               └── magnitude/dB + cal offset ← GPU kernel (O(N))
+    │           → exponential averaging (VBW)
+    │           → Spectrum plot  (ScottPlot SignalXY)
+    │           → Secondary panel (switchable):
+    │               ├── Waterfall   (ScottPlot Heatmap, 200-row scrolling matrix)
+    │               ├── PSD         (ScottPlot SignalXY)
+    │               └── IQ Constellation (ScottPlot Scatter, unit-circle reference)
     │
     └──▶ PlutoSdr.cs  (libiio P/Invoke)
              ├── iio_create_network_context

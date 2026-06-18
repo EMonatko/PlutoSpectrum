@@ -4,95 +4,152 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-        xmlns:local="clr-namespace:PlutoSpectrum"
         mc:Ignorable="d"
-        Title="PlutoSpectrum — Pluto+ Spectrum Analyzer (70 MHz – 7 GHz)"
-        Height="780" Width="1280"
-        MinHeight="600" MinWidth="900"
-        Background="#1E1E2E"
+        Title="PlutoSpectrum  —  Signal &amp; Spectrum Analyser  |  70 MHz – 7 GHz"
+        Height="860" Width="1440"
+        MinHeight="680" MinWidth="1100"
+        Background="#0F0F1A"
         Closed="Window_Closed">
 
     <Window.Resources>
-        <Style x:Key="DarkLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
+
+        <!-- ── Colour palette (Catppuccin Mocha + R&S accent) ────────────── -->
+        <SolidColorBrush x:Key="BgDeep"      Color="#0F0F1A"/>
+        <SolidColorBrush x:Key="BgPanel"     Color="#181825"/>
+        <SolidColorBrush x:Key="BgControl"   Color="#1E1E2E"/>
+        <SolidColorBrush x:Key="BgField"     Color="#232336"/>
+        <SolidColorBrush x:Key="Border1"     Color="#313244"/>
+        <SolidColorBrush x:Key="Border2"     Color="#45475A"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#CDD6F4"/>
+        <SolidColorBrush x:Key="TextMuted"   Color="#6C7086"/>
+        <SolidColorBrush x:Key="AccentBlue"  Color="#89B4FA"/>
+        <SolidColorBrush x:Key="AccentGreen" Color="#A6E3A1"/>
+        <SolidColorBrush x:Key="AccentYellow" Color="#F9E2AF"/>
+        <SolidColorBrush x:Key="AccentRed"   Color="#F38BA8"/>
+
+        <!-- ── Typography ────────────────────────────────────────────────── -->
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground"        Value="{StaticResource TextMuted}"/>
+            <Setter Property="FontFamily"        Value="Segoe UI"/>
+            <Setter Property="FontSize"          Value="10"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        </Style>
+        <Style x:Key="LabelBright" TargetType="TextBlock" BasedOn="{StaticResource Label}">
+            <Setter Property="Foreground" Value="{StaticResource AccentBlue}"/>
+            <Setter Property="FontSize"   Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="ReadoutLarge" TargetType="TextBlock">
+            <Setter Property="Foreground"        Value="{StaticResource AccentGreen}"/>
+            <Setter Property="FontFamily"        Value="Consolas"/>
+            <Setter Property="FontSize"          Value="18"/>
+            <Setter Property="FontWeight"        Value="Bold"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="GroupLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#89B4FA"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="10"/>
+        <Style x:Key="ReadoutSmall" TargetType="TextBlock">
+            <Setter Property="Foreground"        Value="{StaticResource AccentBlue}"/>
+            <Setter Property="FontFamily"        Value="Consolas"/>
+            <Setter Property="FontSize"          Value="11"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="DarkButton" TargetType="Button">
-            <Setter Property="Background" Value="#313244"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,4"/>
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#45475A"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.4"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="StartButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
-            <Setter Property="Background" Value="#1E6340"/>
-            <Setter Property="BorderBrush" Value="#A6E3A1"/>
-            <Setter Property="Foreground" Value="#A6E3A1"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#2A7A52"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+
+        <!-- ── Controls ─────────────────────────────────────────────────── -->
         <Style x:Key="DarkTextBox" TargetType="TextBox">
-            <Setter Property="Background" Value="#313244"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background"             Value="{StaticResource BgField}"/>
+            <Setter Property="Foreground"             Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush"            Value="{StaticResource Border1}"/>
+            <Setter Property="BorderThickness"        Value="1"/>
+            <Setter Property="Padding"                Value="5,2"/>
+            <Setter Property="FontFamily"             Value="Segoe UI"/>
+            <Setter Property="FontSize"               Value="11"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush"             Value="{StaticResource AccentBlue}"/>
+            <Setter Property="SelectionBrush"         Value="{StaticResource AccentBlue}"/>
         </Style>
         <Style x:Key="ReadOnlyBox" TargetType="TextBox" BasedOn="{StaticResource DarkTextBox}">
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="Foreground" Value="#A6E3A1"/>
-            <Setter Property="Background" Value="#181825"/>
+            <Setter Property="IsReadOnly"  Value="True"/>
+            <Setter Property="Foreground"  Value="{StaticResource AccentGreen}"/>
+            <Setter Property="Background"  Value="{StaticResource BgPanel}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border1}"/>
+            <Setter Property="FontFamily"  Value="Consolas"/>
         </Style>
-        <Style x:Key="DarkCombo" TargetType="ComboBox">
-            <Setter Property="Background" Value="#313244"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
+
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="Background"    Value="{StaticResource BgField}"/>
+            <Setter Property="Foreground"    Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource Border2}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding"       Value="12,4"/>
+            <Setter Property="FontFamily"    Value="Segoe UI"/>
+            <Setter Property="FontSize"      Value="11"/>
+            <Setter Property="Cursor"        Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Border1}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBlue}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="StartButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
+            <Setter Property="Background"  Value="#142B1F"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentGreen}"/>
+            <Setter Property="Foreground"  Value="{StaticResource AccentGreen}"/>
+            <Setter Property="FontWeight"  Value="Bold"/>
+        </Style>
+        <Style x:Key="ApplyButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
+            <Setter Property="Background"  Value="#1A1A2E"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBlue}"/>
+            <Setter Property="Foreground"  Value="{StaticResource AccentBlue}"/>
+        </Style>
+
+        <!-- ComboBox -->
+        <Style x:Key="DarkCombo" TargetType="ComboBox">
+            <Setter Property="Background"    Value="{StaticResource BgField}"/>
+            <Setter Property="Foreground"    Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource Border1}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily"    Value="Segoe UI"/>
+            <Setter Property="FontSize"      Value="11"/>
+            <Setter Property="Height"        Value="24"/>
             <Setter Property="ItemContainerStyle">
                 <Setter.Value>
                     <Style TargetType="ComboBoxItem">
-                        <Setter Property="Background" Value="#313244"/>
-                        <Setter Property="Foreground" Value="#CDD6F4"/>
-                        <Setter Property="Padding" Value="6,3"/>
+                        <Setter Property="Background" Value="{StaticResource BgField}"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                        <Setter Property="Padding"    Value="8,4"/>
                         <Setter Property="FontFamily" Value="Segoe UI"/>
-                        <Setter Property="FontSize" Value="11"/>
+                        <Setter Property="FontSize"   Value="11"/>
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#45475A"/>
-                                <Setter Property="Foreground" Value="#CDD6F4"/>
+                                <Setter Property="Background" Value="{StaticResource Border1}"/>
+                                <Setter Property="Foreground" Value="{StaticResource AccentBlue}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#89B4FA"/>
-                                <Setter Property="Foreground" Value="#1E1E2E"/>
+                                <Setter Property="Background" Value="{StaticResource AccentBlue}"/>
+                                <Setter Property="Foreground" Value="{StaticResource BgDeep}"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -117,38 +174,26 @@
                                      Visibility="Hidden" IsReadOnly="True"
                                      Margin="8,3,28,3"
                                      Foreground="{TemplateBinding Foreground}"
-                                     Background="Transparent"
-                                     BorderThickness="0"/>
-                            <ToggleButton x:Name="ToggleButton"
-                                          Focusable="False"
+                                     Background="Transparent" BorderThickness="0"/>
+                            <ToggleButton x:Name="ToggleButton" Focusable="False"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
                                                       RelativeSource={RelativeSource TemplatedParent}}"
-                                          ClickMode="Press"
-                                          Background="Transparent"
-                                          BorderThickness="0"
-                                          Cursor="Hand">
-                                <Path x:Name="Arrow"
-                                      HorizontalAlignment="Right"
-                                      VerticalAlignment="Center"
-                                      Margin="0,0,8,0"
-                                      Fill="#89B4FA"
+                                          ClickMode="Press" Background="Transparent"
+                                          BorderThickness="0" Cursor="Hand">
+                                <Path HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      Margin="0,0,8,0" Fill="{StaticResource AccentBlue}"
                                       Data="M0,0 L4,4 L8,0 Z"/>
                             </ToggleButton>
-                            <Popup x:Name="Popup"
-                                   Placement="Bottom"
+                            <Popup x:Name="Popup" Placement="Bottom"
                                    IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   AllowsTransparency="True"
-                                   Focusable="False"
+                                   AllowsTransparency="True" Focusable="False"
                                    PopupAnimation="Slide">
-                                <Grid x:Name="DropDown"
-                                      SnapsToDevicePixels="True"
+                                <Grid SnapsToDevicePixels="True"
                                       MinWidth="{TemplateBinding ActualWidth}"
                                       MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <Border x:Name="DropDownBorder"
-                                            Background="#313244"
-                                            BorderBrush="#45475A"
-                                            BorderThickness="1"
-                                            CornerRadius="0,0,3,3"/>
+                                    <Border Background="{StaticResource BgField}"
+                                            BorderBrush="{StaticResource Border2}"
+                                            BorderThickness="1" CornerRadius="0,0,3,3"/>
                                     <ScrollViewer SnapsToDevicePixels="True">
                                         <StackPanel IsItemsHost="True"
                                                     KeyboardNavigation.DirectionalNavigation="Contained"/>
@@ -160,110 +205,182 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="Separator" TargetType="Border">
-            <Setter Property="Width" Value="1"/>
-            <Setter Property="Background" Value="#45475A"/>
-            <Setter Property="Margin" Value="8,2,8,2"/>
+
+        <!-- Thin vertical separator -->
+        <Style x:Key="VSep" TargetType="Border">
+            <Setter Property="Width"      Value="1"/>
+            <Setter Property="Background" Value="{StaticResource Border1}"/>
+            <Setter Property="Margin"     Value="6,3,6,3"/>
         </Style>
+
+        <!-- Section divider label inside right panel -->
+        <Style x:Key="PanelSection" TargetType="Border">
+            <Setter Property="Background"       Value="{StaticResource Border1}"/>
+            <Setter Property="Padding"          Value="6,3"/>
+            <Setter Property="Margin"           Value="0,4,0,2"/>
+        </Style>
+
+        <!-- Slider -->
+        <Style x:Key="ThinSlider" TargetType="Slider">
+            <Setter Property="Foreground" Value="{StaticResource AccentBlue}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
     </Window.Resources>
 
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Root layout: Title bar → Toolbar → [Plots | Right panel] → Status
+    ══════════════════════════════════════════════════════════════════════════ -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="2*"/>
-            <RowDefinition Height="4"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="4"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="36"/>   <!-- 0 Title / branding bar -->
+            <RowDefinition Height="38"/>   <!-- 1 Toolbar row A: Freq / Mode / Start-Stop -->
+            <RowDefinition Height="34"/>   <!-- 2 Toolbar row B: DSP / Gain / Display -->
+            <RowDefinition Height="*"/>    <!-- 3 Main content -->
+            <RowDefinition Height="26"/>   <!-- 4 Status bar -->
         </Grid.RowDefinitions>
 
-        <!-- Row 0: Frequency controls -->
-        <Border Grid.Row="0" Background="#181825" Padding="10,5,10,4"
-                BorderBrush="#313244" BorderThickness="0,0,0,1">
+        <!-- ── Row 0: Branding bar ───────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="{StaticResource BgPanel}"
+                BorderBrush="{StaticResource Border1}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0">
+                    <TextBlock Text="PlutoSpectrum" VerticalAlignment="Center"
+                               FontFamily="Segoe UI Semibold" FontSize="14"
+                               Foreground="{StaticResource AccentBlue}"/>
+                    <TextBlock Text="  Signal &amp; Spectrum Analyser" VerticalAlignment="Center"
+                               FontFamily="Segoe UI" FontSize="12"
+                               Foreground="{StaticResource TextMuted}"/>
+                </StackPanel>
+
+                <!-- Large centre frequency / span readout -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource Label}" Text="CF" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtReadoutCf" Style="{StaticResource ReadoutLarge}"
+                               Text="—" Margin="0,0,16,0"/>
+                    <TextBlock Style="{StaticResource Label}" Text="SPAN" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtReadoutSpan" Style="{StaticResource ReadoutSmall}"
+                               Text="—" Margin="0,0,16,0"/>
+                    <TextBlock Style="{StaticResource Label}" Text="RBW" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtRbwActual" Style="{StaticResource ReadoutSmall}"
+                               Text="—" Margin="0,0,16,0"/>
+                    <TextBlock Style="{StaticResource Label}" Text="VBW" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtVbwActual" Style="{StaticResource ReadoutSmall}"
+                               Text="—" Margin="0,0,16,0"/>
+                    <TextBlock Style="{StaticResource Label}" Text="Avg" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtReadoutAvg" Style="{StaticResource ReadoutSmall}"
+                               Text="—"/>
+                </StackPanel>
+
+                <!-- Mouse freq top-right -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center" Margin="12,0">
+                    <TextBlock Style="{StaticResource Label}" Text="Mkr " Margin="0,0,2,0"/>
+                    <TextBlock x:Name="TxtMouseFreq" Style="{StaticResource ReadoutSmall}"
+                               Text="—"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ── Row 1: Toolbar A — Frequency / Mode / Connection ──────────── -->
+        <Border Grid.Row="1" Background="{StaticResource BgControl}"
+                BorderBrush="{StaticResource Border1}" BorderThickness="0,0,0,1"
+                Padding="8,0">
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                <!-- Connection -->
-                <TextBlock Text="IP" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <TextBox x:Name="TxtPlutoIp" Text="192.168.2.1" Width="100" Height="24"
-                         Style="{StaticResource DarkTextBox}" Margin="0,0,6,0"/>
-
-                <Border Style="{StaticResource Separator}"/>
-
-                <!-- Frequency Inputs -->
-                <TextBlock Text="CENTER" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <TextBox x:Name="TxtCenterFreq" Text="433.0" Width="75" Height="24"
+                <!-- IP + Max Freq -->
+                <TextBlock Style="{StaticResource Label}" Text="IP" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtPlutoIp" Text="192.168.2.1" Width="96" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,4,0"/>
+                <TextBlock Style="{StaticResource Label}" Text="Max" Margin="0,0,3,0"
+                           ToolTip="Max LO frequency in MHz. Use 6000 for standard firmware, 6999 for extended."/>
+                <TextBox x:Name="TxtMaxFreq" Text="6000" Width="46" Height="24"
                          Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
-                         ToolTip="Center frequency in MHz (70 – 7000)"/>
-                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+                         ToolTip="Max tuning frequency MHz (6000 standard, 6999 extended firmware)"
+                         LostFocus="TxtMaxFreq_LostFocus" KeyDown="TxtMaxFreq_KeyDown"/>
+                <TextBlock Style="{StaticResource Label}" Text="MHz" Margin="0,0,6,0"/>
 
-                <TextBlock Text="START" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <TextBox x:Name="TxtStartFreq" Text="70.0" Width="72" Height="24"
+                <Border Style="{StaticResource VSep}"/>
+
+                <!-- Center freq -->
+                <TextBlock Style="{StaticResource LabelBright}" Text="CF" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtCenterFreq" Text="433.0" Width="72" Height="24"
                          Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
-                         ToolTip="Sweep start frequency in MHz"/>
-                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+                         ToolTip="Center frequency MHz"/>
+                <TextBlock Style="{StaticResource Label}" Text="MHz" Margin="0,0,6,0"/>
 
-                <TextBlock Text="STOP" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <TextBox x:Name="TxtStopFreq" Text="7000.0" Width="72" Height="24"
-                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
-                         ToolTip="Sweep stop frequency in MHz"/>
-                <TextBlock Text="MHz" Style="{StaticResource DarkLabel}" Margin="0,0,8,0"/>
+                <!-- Start / Stop -->
+                <TextBlock Style="{StaticResource LabelBright}" Text="START" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtStartFreq" Text="70.0" Width="64" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"/>
+                <TextBlock Style="{StaticResource Label}" Text="MHz" Margin="0,0,6,0"/>
 
-                <Border Style="{StaticResource Separator}"/>
+                <TextBlock Style="{StaticResource LabelBright}" Text="STOP" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtStopFreq" Text="6000.0" Width="64" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"/>
+                <TextBlock Style="{StaticResource Label}" Text="MHz" Margin="0,0,6,0"/>
 
-                <!-- SPAN -->
-                <TextBlock Text="SPAN" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbSpan" Width="100" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          SelectionChanged="CmbSpan_SelectionChanged"
-                          ToolTip="Displayed frequency span (sets sample rate)">
-                    <ComboBoxItem Content="200 kHz"   Tag="200000"/>
-                    <ComboBoxItem Content="500 kHz"   Tag="500000"/>
-                    <ComboBoxItem Content="1 MHz"     Tag="1000000"/>
-                    <ComboBoxItem Content="2 MHz"     Tag="2000000"/>
-                    <ComboBoxItem Content="5 MHz"     Tag="5000000" IsSelected="True"/>
-                    <ComboBoxItem Content="10 MHz"    Tag="10000000"/>
-                    <ComboBoxItem Content="20 MHz"    Tag="20000000"/>
-                    <ComboBoxItem Content="Full"      Tag="0"/>
+                <Border Style="{StaticResource VSep}"/>
+
+                <!-- Span -->
+                <TextBlock Style="{StaticResource LabelBright}" Text="SPAN" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbSpan" Width="88" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbSpan_SelectionChanged"
+                          ToolTip="Display span (sets ADC sample rate)">
+                    <ComboBoxItem Content="200 kHz"  Tag="200000"/>
+                    <ComboBoxItem Content="500 kHz"  Tag="500000"/>
+                    <ComboBoxItem Content="1 MHz"    Tag="1000000"/>
+                    <ComboBoxItem Content="2 MHz"    Tag="2000000"/>
+                    <ComboBoxItem Content="5 MHz"    Tag="5000000" IsSelected="True"/>
+                    <ComboBoxItem Content="10 MHz"   Tag="10000000"/>
+                    <ComboBoxItem Content="20 MHz"   Tag="20000000"/>
+                    <ComboBoxItem Content="Full"     Tag="0"/>
                 </ComboBox>
 
-                <Border Style="{StaticResource Separator}"/>
+                <!-- TxtSpanActual hidden — value shown in branding bar -->
+                <TextBox x:Name="TxtSpanActual" Visibility="Collapsed"/>
+
+                <Border Style="{StaticResource VSep}"/>
 
                 <!-- Mode -->
-                <TextBlock Text="MODE" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbMode" Width="95" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          SelectionChanged="CmbMode_SelectionChanged">
+                <TextBlock Style="{StaticResource LabelBright}" Text="MODE" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbMode" Width="95" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbMode_SelectionChanged">
                     <ComboBoxItem Content="Live"       Tag="live"      IsSelected="True"/>
                     <ComboBoxItem Content="Span Sweep" Tag="sweep"/>
                     <ComboBoxItem Content="Full Sweep" Tag="fullsweep"/>
                 </ComboBox>
 
-                <Border Style="{StaticResource Separator}"/>
+                <Border Style="{StaticResource VSep}"/>
 
-                <!-- Start/Stop + Apply -->
-                <Button x:Name="BtnStartStop" Content="▶  START" Width="85" Height="26"
+                <!-- START / STOP + APPLY -->
+                <Button x:Name="BtnStartStop" Content="▶  START" Width="88" Height="28"
                         Style="{StaticResource StartButton}" Margin="0,0,6,0"
                         Click="BtnStartStop_Click"/>
-                <Button x:Name="BtnApplyFreq" Content="Apply" Width="56" Height="26"
-                        Style="{StaticResource DarkButton}"
+                <Button x:Name="BtnApplyFreq" Content="Apply" Width="56" Height="28"
+                        Style="{StaticResource ApplyButton}" IsEnabled="False"
                         Click="BtnApplyFreq_Click"
-                        ToolTip="Apply center freq / start-stop in live/sweep mode without restarting"/>
+                        ToolTip="Apply frequency change without full restart"/>
             </WrapPanel>
         </Border>
 
-        <!-- Row 1: Signal / DSP controls -->
-        <Border Grid.Row="1" Background="#11111F" Padding="10,4,10,4"
-                BorderBrush="#313244" BorderThickness="0,0,0,1">
+        <!-- ── Row 2: Toolbar B — DSP / Gain / Display ───────────────────── -->
+        <Border Grid.Row="2" Background="{StaticResource BgPanel}"
+                BorderBrush="{StaticResource Border1}" BorderThickness="0,0,0,1"
+                Padding="8,0">
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
 
                 <!-- RBW -->
-                <TextBlock Text="RBW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbRbw" Width="100" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          SelectionChanged="CmbRbw_SelectionChanged"
-                          ToolTip="Resolution Bandwidth — determines FFT size automatically">
+                <TextBlock Style="{StaticResource LabelBright}" Text="RBW" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRbw" Width="88" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbRbw_SelectionChanged"
+                          ToolTip="Resolution Bandwidth — controls FFT size">
                     <ComboBoxItem Content="1 kHz"   Tag="1000"/>
                     <ComboBoxItem Content="3 kHz"   Tag="3000"/>
                     <ComboBoxItem Content="10 kHz"  Tag="10000"/>
@@ -275,11 +392,10 @@
                 </ComboBox>
 
                 <!-- VBW -->
-                <TextBlock Text="VBW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbVbw" Width="100" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          SelectionChanged="CmbVbw_SelectionChanged"
-                          ToolTip="Video Bandwidth — post-detection averaging filter">
+                <TextBlock Style="{StaticResource LabelBright}" Text="VBW" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbVbw" Width="88" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbVbw_SelectionChanged"
+                          ToolTip="Video Bandwidth — post-detection averaging depth">
                     <ComboBoxItem Content="1 kHz"   Tag="1000"/>
                     <ComboBoxItem Content="3 kHz"   Tag="3000"/>
                     <ComboBoxItem Content="10 kHz"  Tag="10000"/>
@@ -290,27 +406,25 @@
                     <ComboBoxItem Content="3 MHz"   Tag="3000000"/>
                 </ComboBox>
 
-                <Border Style="{StaticResource Separator}"/>
+                <Border Style="{StaticResource VSep}"/>
 
                 <!-- RF BW -->
-                <TextBlock Text="RF BW" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbRfBw" Width="90" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          ToolTip="Analog front-end filter bandwidth">
-                    <ComboBoxItem Content="200 kHz" Tag="200000"/>
-                    <ComboBoxItem Content="1 MHz"   Tag="1000000"/>
-                    <ComboBoxItem Content="2 MHz"   Tag="2000000"/>
-                    <ComboBoxItem Content="5 MHz"   Tag="5000000" IsSelected="True"/>
-                    <ComboBoxItem Content="10 MHz"  Tag="10000000"/>
-                    <ComboBoxItem Content="20 MHz"  Tag="20000000"/>
+                <TextBlock Style="{StaticResource Label}" Text="RF BW" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRfBw" Width="82" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" ToolTip="Analog front-end filter bandwidth">
+                    <ComboBoxItem Content="200 kHz"  Tag="200000"/>
+                    <ComboBoxItem Content="1 MHz"    Tag="1000000"/>
+                    <ComboBoxItem Content="2 MHz"    Tag="2000000"/>
+                    <ComboBoxItem Content="5 MHz"    Tag="5000000" IsSelected="True"/>
+                    <ComboBoxItem Content="10 MHz"   Tag="10000000"/>
+                    <ComboBoxItem Content="20 MHz"   Tag="20000000"/>
                 </ComboBox>
 
-                <!-- Sample Rate (kept for manual override) -->
-                <TextBlock Text="Fs" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbSampleRate" Width="90" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          SelectionChanged="CmbSampleRate_SelectionChanged"
-                          ToolTip="ADC sample rate (overrides Span when set manually)">
+                <!-- Fs -->
+                <TextBlock Style="{StaticResource Label}" Text="Fs" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbSampleRate" Width="82" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbSampleRate_SelectionChanged"
+                          ToolTip="ADC sample rate">
                     <ComboBoxItem Content="1 MSPS"  Tag="1000000"/>
                     <ComboBoxItem Content="2 MSPS"  Tag="2000000"/>
                     <ComboBoxItem Content="5 MSPS"  Tag="5000000" IsSelected="True"/>
@@ -318,11 +432,10 @@
                     <ComboBoxItem Content="20 MSPS" Tag="20000000"/>
                 </ComboBox>
 
-                <!-- FFT Size (manual) -->
-                <TextBlock Text="FFT" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbFftSize" Width="75" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0"
-                          ToolTip="FFT size (auto-set by RBW; override here)">
+                <!-- FFT -->
+                <TextBlock Style="{StaticResource Label}" Text="FFT" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbFftSize" Width="70" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" ToolTip="FFT point count (auto-set by RBW)">
                     <ComboBoxItem Content="1024"  Tag="1024"/>
                     <ComboBoxItem Content="2048"  Tag="2048"/>
                     <ComboBoxItem Content="4096"  Tag="4096" IsSelected="True"/>
@@ -331,126 +444,291 @@
                     <ComboBoxItem Content="32768" Tag="32768"/>
                 </ComboBox>
 
-                <Border Style="{StaticResource Separator}"/>
+                <Border Style="{StaticResource VSep}"/>
 
-                <!-- Gain -->
-                <TextBlock Text="GAIN" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <Slider x:Name="SldGain" Minimum="0" Maximum="73" Value="40" Width="100"
-                        VerticalAlignment="Center" Margin="0,0,4,0"
-                        ValueChanged="SldGain_ValueChanged"
-                        Foreground="#89B4FA"/>
-                <TextBlock x:Name="TxtGainVal" Text="40" Style="{StaticResource DarkLabel}"
-                           Width="24" Margin="0,0,10,0"/>
-                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,12,0"/>
+                <!-- Gain slider -->
+                <TextBlock Style="{StaticResource LabelBright}" Text="GAIN" Margin="0,0,6,0"/>
+                <Slider x:Name="SldGain" Minimum="0" Maximum="73" Value="40" Width="110"
+                        Style="{StaticResource ThinSlider}" Margin="0,0,4,0"
+                        ValueChanged="SldGain_ValueChanged"/>
+                <TextBlock x:Name="TxtGainVal" Text="40" Style="{StaticResource ReadoutSmall}"
+                           Width="22" Margin="0,0,2,0"/>
+                <TextBlock Style="{StaticResource Label}" Text="dB" Margin="0,0,8,0"/>
 
-                <Border Style="{StaticResource Separator}"/>
-
-                <!-- RX Antenna -->
-                <TextBlock Text="ANT" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbRxAntenna" Width="85" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,8,0">
+                <!-- Antenna -->
+                <TextBlock Style="{StaticResource Label}" Text="ANT" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbRxAntenna" Width="82" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0">
                     <ComboBoxItem Content="Antenna 1" Tag="A_BALANCED" IsSelected="True"/>
                     <ComboBoxItem Content="Antenna 2" Tag="B_BALANCED"/>
                 </ComboBox>
 
-                <Border Style="{StaticResource Separator}"/>
+                <Border Style="{StaticResource VSep}"/>
 
-                <!-- Derived readouts (read-only) -->
-                <TextBlock Text="RBW:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
-                <TextBox x:Name="TxtRbwActual" Width="70" Height="22"
-                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,8,0"/>
-                <TextBlock Text="VBW:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
-                <TextBox x:Name="TxtVbwActual" Width="70" Height="22"
-                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,8,0"/>
-                <TextBlock Text="Span:" Style="{StaticResource GroupLabel}" Margin="0,0,3,0"/>
-                <TextBox x:Name="TxtSpanActual" Width="70" Height="22"
-                         Style="{StaticResource ReadOnlyBox}" Margin="0,0,12,0"/>
-
-                <Border Style="{StaticResource Separator}"/>
-
-                <!-- Ref Level -->
-                <TextBlock Text="REF LVL" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <TextBox x:Name="TxtRefLevel" Text="0" Width="44" Height="24"
-                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
-                         ToolTip="Reference level (top of Y axis) in dBFS or dBm"
-                         LostFocus="TxtRefLevel_LostFocus"
-                         KeyDown="TxtRefLevel_KeyDown"/>
-                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,10,0"/>
-
-                <!-- dB/div -->
-                <TextBlock Text="dB/div" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"/>
-                <ComboBox x:Name="CmbDbDiv" Width="70" Height="24"
-                          Style="{StaticResource DarkCombo}" Margin="0,0,10,0"
-                          SelectionChanged="CmbDbDiv_SelectionChanged"
-                          ToolTip="Vertical scale — dB per division (10 divs shown)">
-                    <ComboBoxItem Content="1 dB"   Tag="10"/>
-                    <ComboBoxItem Content="2 dB"   Tag="20"/>
-                    <ComboBoxItem Content="5 dB"   Tag="50"/>
-                    <ComboBoxItem Content="10 dB"  Tag="100" IsSelected="True"/>
-                    <ComboBoxItem Content="20 dB"  Tag="200"/>
+                <!-- Bottom view selector -->
+                <TextBlock Style="{StaticResource LabelBright}" Text="VIEW" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbBottomView" Width="110" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbBottomView_SelectionChanged"
+                          ToolTip="Choose what to display in the bottom panel">
+                    <ComboBoxItem Content="Waterfall"      Tag="waterfall" IsSelected="True"/>
+                    <ComboBoxItem Content="PSD"            Tag="psd"/>
+                    <ComboBoxItem Content="IQ Constell."   Tag="iq"/>
+                    <ComboBoxItem Content="None"           Tag="none"/>
                 </ComboBox>
 
-                <!-- Cal Offset -->
-                <TextBlock Text="CAL" Style="{StaticResource GroupLabel}" Margin="0,0,4,0"
-                           ToolTip="Calibration offset added to all power readings. Use to align dBFS to dBm (= −gainDb − NF_est + hardware_correction)"/>
-                <TextBox x:Name="TxtCalOffset" Text="0" Width="44" Height="24"
+                <Border Style="{StaticResource VSep}"/>
+
+                <!-- Display: Ref Level / dB/div / Cal -->
+                <TextBlock Style="{StaticResource Label}" Text="REF" Margin="0,0,4,0"/>
+                <TextBox x:Name="TxtRefLevel" Text="0" Width="40" Height="24"
                          Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
-                         ToolTip="Add this dB offset to convert dBFS → dBm (tip: ≈ −gainDiff at 2.4 GHz)"
-                         LostFocus="TxtCalOffset_LostFocus"
-                         KeyDown="TxtCalOffset_KeyDown"/>
-                <TextBlock Text="dB" Style="{StaticResource DarkLabel}" Margin="0,0,0,0"/>
+                         ToolTip="Reference level — top of Y axis (dBFS or dBm)"
+                         LostFocus="TxtRefLevel_LostFocus" KeyDown="TxtRefLevel_KeyDown"/>
+                <TextBlock Style="{StaticResource Label}" Text="dB" Margin="0,0,8,0"/>
+
+                <TextBlock Style="{StaticResource Label}" Text="dB/div" Margin="0,0,4,0"/>
+                <ComboBox x:Name="CmbDbDiv" Width="66" Style="{StaticResource DarkCombo}"
+                          Margin="0,0,6,0" SelectionChanged="CmbDbDiv_SelectionChanged"
+                          ToolTip="Vertical scale (10 divisions shown)">
+                    <ComboBoxItem Content="1 dB"  Tag="10"/>
+                    <ComboBoxItem Content="2 dB"  Tag="20"/>
+                    <ComboBoxItem Content="5 dB"  Tag="50"/>
+                    <ComboBoxItem Content="10 dB" Tag="100" IsSelected="True"/>
+                    <ComboBoxItem Content="20 dB" Tag="200"/>
+                </ComboBox>
+
+                <TextBlock Style="{StaticResource Label}" Text="CAL" Margin="0,0,4,0"
+                           ToolTip="Offset to convert dBFS → dBm estimate"/>
+                <TextBox x:Name="TxtCalOffset" Text="0" Width="40" Height="24"
+                         Style="{StaticResource DarkTextBox}" Margin="0,0,2,0"
+                         LostFocus="TxtCalOffset_LostFocus" KeyDown="TxtCalOffset_KeyDown"/>
+                <TextBlock Style="{StaticResource Label}" Text="dB" Margin="0,0,0,0"/>
             </WrapPanel>
         </Border>
 
-        <!-- Spectrum plot (FFT magnitude) -->
-        <sp:WpfPlot x:Name="SpectrumPlot" Grid.Row="2"
-                    Margin="4,4,4,0"
-                    Background="#1E1E2E"/>
+        <!-- ── Row 3: Main content — Plots (left) + Info panel (right) ───── -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>          <!-- plots -->
+                <ColumnDefinition Width="4"/>          <!-- splitter -->
+                <ColumnDefinition Width="220" MinWidth="160" MaxWidth="320"/>  <!-- right panel -->
+            </Grid.ColumnDefinitions>
 
-        <!-- Splitter -->
-        <GridSplitter Grid.Row="3" Height="4"
-                      HorizontalAlignment="Stretch"
-                      Background="#313244"
-                      ResizeDirection="Rows"
-                      ResizeBehavior="PreviousAndNext"/>
+            <!-- Left: stacked plots -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*"/>   <!-- Spectrum — largest -->
+                    <RowDefinition Height="4"/>
+                    <RowDefinition x:Name="SecondaryRow" Height="*"/>  <!-- Secondary (Waterfall/PSD/IQ/None) -->
+                </Grid.RowDefinitions>
 
-        <!-- PSD plot -->
-        <sp:WpfPlot x:Name="PsdPlot" Grid.Row="4"
-                    Margin="4,0,4,0"
-                    Background="#1E1E2E"/>
+                <!-- Spectrum -->
+                <Border Grid.Row="0" Background="{StaticResource BgDeep}"
+                        BorderBrush="{StaticResource Border1}" BorderThickness="1"
+                        Margin="4,4,0,0">
+                    <Grid>
+                        <sp:WpfPlot x:Name="SpectrumPlot" Background="{StaticResource BgDeep}"
+                                    MouseMove="PlotMouseMove"/>
+                        <!-- Corner label -->
+                        <TextBlock Text="SPECTRUM" Margin="8,6,0,0"
+                                   HorizontalAlignment="Left" VerticalAlignment="Top"
+                                   Foreground="{StaticResource AccentBlue}"
+                                   FontFamily="Segoe UI Semibold" FontSize="9" Opacity="0.6"/>
+                    </Grid>
+                </Border>
 
-        <!-- Splitter -->
-        <GridSplitter Grid.Row="5" Height="4"
-                      HorizontalAlignment="Stretch"
-                      Background="#313244"
-                      ResizeDirection="Rows"
-                      ResizeBehavior="PreviousAndNext"/>
+                <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch"
+                              Background="{StaticResource BgDeep}" ResizeDirection="Rows"/>
 
-        <!-- Waterfall plot -->
-        <sp:WpfPlot x:Name="WaterfallPlot" Grid.Row="6"
-                    Margin="4,0,4,4"
-                    Background="#1E1E2E"/>
+                <!-- Secondary panel: Waterfall / PSD / IQ Constellation -->
+                <Border x:Name="SecondaryBorder" Grid.Row="2" Background="{StaticResource BgDeep}"
+                        BorderBrush="{StaticResource Border1}" BorderThickness="1"
+                        Margin="4,0,0,4">
+                    <Grid>
+                        <sp:WpfPlot x:Name="SecondaryPlot" Background="{StaticResource BgDeep}"
+                                    MouseMove="PlotMouseMove"/>
+                        <TextBlock x:Name="TxtSecondaryLabel" Text="WATERFALL" Margin="8,4,0,0"
+                                   HorizontalAlignment="Left" VerticalAlignment="Top"
+                                   Foreground="{StaticResource AccentRed}"
+                                   FontFamily="Segoe UI Semibold" FontSize="9" Opacity="0.6"/>
+                    </Grid>
+                </Border>
+            </Grid>
 
-        <!-- Status bar -->
-        <Border Grid.Row="7" Background="#181825" Padding="10,3">
+            <!-- Vertical splitter -->
+            <GridSplitter Grid.Column="1" Width="4" VerticalAlignment="Stretch"
+                          HorizontalAlignment="Stretch"
+                          Background="{StaticResource BgDeep}" ResizeDirection="Columns"/>
+
+            <!-- Right panel: SA info + marker readouts -->
+            <Border Grid.Column="2" Background="{StaticResource BgPanel}"
+                    BorderBrush="{StaticResource Border1}" BorderThickness="1,0,0,0"
+                    Margin="0,4,4,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="8,6,8,6">
+
+                        <!-- ─ Hardware section ─ -->
+                        <Border Style="{StaticResource PanelSection}">
+                            <TextBlock Text="HARDWARE" Style="{StaticResource LabelBright}"/>
+                        </Border>
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Mode"   Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoMode"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Fs"     Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoFs"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="FFT"    Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoFft"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Gain"   Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtInfoGain"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Ant"    Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtInfoAnt"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                        </Grid>
+
+                        <!-- ─ Frequency section ─ -->
+                        <Border Style="{StaticResource PanelSection}" Margin="0,10,0,2">
+                            <TextBlock Text="FREQUENCY" Style="{StaticResource LabelBright}"/>
+                        </Border>
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="CF"     Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoCf"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Span"   Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoSpan"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Start"  Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoStart"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Stop"   Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtInfoStop"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                        </Grid>
+
+                        <!-- ─ DSP section ─ -->
+                        <Border Style="{StaticResource PanelSection}" Margin="0,10,0,2">
+                            <TextBlock Text="DSP" Style="{StaticResource LabelBright}"/>
+                        </Border>
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="RBW"    Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoRbw"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="VBW"    Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoVbw"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Avg depth" Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoAvg"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Window" Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1"
+                                       Text="Hann (periodic)" Style="{StaticResource ReadoutSmall}"
+                                       Foreground="{StaticResource TextMuted}"/>
+                        </Grid>
+
+                        <!-- ─ Display section ─ -->
+                        <Border Style="{StaticResource PanelSection}" Margin="0,10,0,2">
+                            <TextBlock Text="DISPLAY" Style="{StaticResource LabelBright}"/>
+                        </Border>
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Ref level" Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtInfoRef"
+                                       Text="0 dB" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="dB/div" Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtInfoDbDiv"
+                                       Text="10 dB" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Cal offset" Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtInfoCal"
+                                       Text="0 dB" Style="{StaticResource ReadoutSmall}"/>
+                        </Grid>
+
+                        <!-- ─ Marker ─ -->
+                        <Border Style="{StaticResource PanelSection}" Margin="0,10,0,2">
+                            <TextBlock Text="MARKER" Style="{StaticResource LabelBright}"/>
+                        </Border>
+                        <Grid Margin="2,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Freq"  Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtMkrFreq"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Amp"   Style="{StaticResource Label}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtMkrAmp"
+                                       Text="—" Style="{StaticResource ReadoutSmall}"/>
+                        </Grid>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- ── Row 4: Status bar ─────────────────────────────────────────── -->
+        <Border Grid.Row="4" Background="{StaticResource BgPanel}"
+                BorderBrush="{StaticResource Border1}" BorderThickness="0,1,0,0"
+                Padding="10,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="TxtStatus" Grid.Column="0"
                            Text="Ready — connect Pluto+ and press START"
-                           Style="{StaticResource DarkLabel}"/>
+                           Style="{StaticResource StatusText}"/>
                 <TextBlock x:Name="TxtSaInfo" Grid.Column="1"
-                           Text="" Style="{StaticResource DarkLabel}"
-                           Foreground="#A6E3A1"
-                           Margin="0,0,20,0"/>
-                <TextBlock x:Name="TxtMouseFreq" Grid.Column="2"
-                           Text="" Style="{StaticResource DarkLabel}"
-                           Foreground="#89B4FA"
+                           Text="" Style="{StaticResource StatusText}"
+                           Foreground="{StaticResource AccentGreen}"
                            Margin="0,0,8,0"/>
             </Grid>
         </Border>
+
     </Grid>
 </Window>
